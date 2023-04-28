@@ -8,7 +8,6 @@ English | [简体中文](README.zh-CN.md)
 ## Example
 
 ```go
-// example/main.go
 package main
 
 import (
@@ -16,8 +15,10 @@ import (
 	"net/http"
 	"path"
 
-	ginI18n "github.com/waset/ginI18n"
+	i18n "github.com/waset/ginI18n"
+
 	"github.com/gin-gonic/gin"
+	"golang.org/x/text/language"
 )
 
 func main() {
@@ -25,18 +26,18 @@ func main() {
 	router := gin.New()
 
 	// apply i18n middleware
-	router.Use(ginI18n.Localizer(&ginI18n.Options{
-		DefaultLang:  "zh-CN",                          // default language
-		SupportLangs: "zh-CN,en-US",                    // list of supported languages ​​(must include default language)
+	router.Use(i18n.Localizer(&i18n.Options{
+		DefaultLang:  "zh-Hans",        // default language
+		SupportLangs: "zh-Hans,en-US",                    // list of supported languages ​​(must include default language)
 		FilePath:     path.Join("example", "localize"), // multilingual file directory
 	}))
 
 	router.GET("/", func(c *gin.Context) {
-		c.String(http.StatusOK, ginI18n.Msg(c, "welcome"))
+		c.String(http.StatusOK, i18n.Msg(c, "welcome"))
 	})
 
 	router.GET("/:name", func(c *gin.Context) {
-		c.String(http.StatusOK, ginI18n.Msg(c, "hello_world", c.Param("name")))
+		c.String(http.StatusOK, i18n.Msg(c, "hello_world", c.Param("name")))
 	})
 
 	if err := router.Run(":8080"); err != nil {
@@ -73,3 +74,58 @@ curl http://127.0.0.1:8080/ -H 'accept-language: en'                # welcome!
 curl http://127.0.0.1:8080/gabe -H 'accept-language: zh-CN'         # 你好 gabe!
 curl http://127.0.0.1:8080/gabe -H 'accept-language: en-US'         # hello gabe!
 ```
+
+## Config
+
+<details>
+<summary>i18n-ally</summary>
+<br>
+
+[i18n-ally](https://github.com/lokalise/i18n-ally)
+
+```json
+// .vscode/settings.json
+{
+    "i18n-ally.localesPaths": [
+        "locales"
+    ],
+    "i18n-ally.sourceLanguage": "zh-Hans",
+    "i18n-ally.enabledFrameworks": [
+        "custom",
+    ],
+    "i18n-ally.sortKeys": true,
+}
+
+```
+
+```yml
+# .vscode/i18n-ally-custom-framework.yml
+
+# An array of strings which contain Language Ids defined by VS Code
+# You can check avaliable language ids here: https://code.visualstudio.com/docs/languages/overview#_language-id
+languageIds:
+  - go
+
+# An array of RegExes to find the key usage. **The key should be captured in the first match group**.
+# You should unescape RegEx strings in order to fit in the YAML file
+# To help with this, you can use https://www.freeformatter.com/json-escape.html
+usageMatchRegex:
+  # The following example shows how to detect `t("your.i18n.keys")`
+  # the `{key}` will be placed by a proper keypath matching regex,
+  # you can ignore it and use your own matching rules as well
+  - "(?:i18n\\.Msg\\(\\w+, *['\"]([\\w.-]+)['\"](?: *, *[\\w{}]+)*\\))"
+
+
+# An array of strings containing refactor templates.
+# The "$1" will be replaced by the keypath specified.
+# Optional: uncomment the following two lines to use
+
+refactorTemplates:
+ - i18n.Msg(c, "$1")
+
+
+# If set to true, only enables this custom framework (will disable all built-in frameworks)
+monopoly: true
+
+```
+</details>
